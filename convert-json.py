@@ -2,7 +2,7 @@ import requests
 import pandas as pd
 
 # Define the URL of the JSON data
-url = "https://gbfs.lyft.com/gbfs/2.3/chi/en/station_information.json"  # Replace with your actual link
+url = "https://gbfs.lyft.com/gbfs/2.3/chi/en/station_information.json"  
 
 try:
     # Fetch the data from the URL
