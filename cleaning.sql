@@ -459,3 +459,62 @@ SET c.end_lat = si.latitude,
 FROM cyclistic_2024 c
 JOIN stations_information si
     ON c.end_station_name = si.station_name;
+
+--* Delete a rent transaction with a length duration of more than 24 hours and less than 60 seconds or a minute
+DELETE FROM cyclistic_2024
+WHERE DATEDIFF(SECOND, CAST(started_at AS DATETIME), CAST(ended_at AS DATETIME)) < 60;
+
+DELETE FROM cyclistic_2024
+WHERE DATEDIFF(HOUR, CAST(started_at AS DATETIME), CAST(ended_at AS DATETIME)) > 24;
+
+--* Delete duplicates
+WITH a AS (SELECT 
+    ride_id, 
+    COUNT(*) AS duplicate_count
+FROM cyclistic_2024
+GROUP BY ride_id
+HAVING COUNT(*) > 1)
+
+DELETE
+FROM cyclistic_2024
+WHERE ride_id in (SELECT ride_id FROM a)
+AND DATEPART(MILLISECOND, CAST(started_at AS DATETIME)) = 0;
+
+--* Format data
+ALTER TABLE cyclistic_2024 ALTER COLUMN ride_id VARCHAR(50) NOT NULL;
+ALTER TABLE cyclistic_2024 ALTER COLUMN rideable_type VARCHAR(50);
+ALTER TABLE cyclistic_2024 ALTER COLUMN started_at DATETIME;
+ALTER TABLE cyclistic_2024 ALTER COLUMN ended_at DATETIME;
+ALTER TABLE cyclistic_2024 ALTER COLUMN start_station_id VARCHAR(50);
+ALTER TABLE cyclistic_2024 ALTER COLUMN start_station_name VARCHAR(50);
+ALTER TABLE cyclistic_2024 ALTER COLUMN end_station_id VARCHAR(50);
+ALTER TABLE cyclistic_2024 ALTER COLUMN end_station_name VARCHAR(50);
+ALTER TABLE cyclistic_2024 ALTER COLUMN start_lat FLOAT;
+ALTER TABLE cyclistic_2024 ALTER COLUMN start_lng FLOAT;
+ALTER TABLE cyclistic_2024 ALTER COLUMN end_lat FLOAT;
+ALTER TABLE cyclistic_2024 ALTER COLUMN end_lng FLOAT;
+ALTER TABLE cyclistic_2024 ALTER COLUMN member_casual VARCHAR(50);
+
+--* New attributes 
+ALTER TABLE cyclistic_2024
+ADD month varchar(50);
+ALTER TABLE cyclistic_2024
+ADD day_of_the_week varchar(50);
+ALTER TABLE cyclistic_2024
+ADD is_weekend BIT;
+
+UPDATE cyclistic_2024
+SET month = DATENAME(MONTH, started_at);
+UPDATE cyclistic_2024
+SET day_of_the_week = DATENAME(WEEKDAY, started_at);
+UPDATE cyclistic_2024
+SET is_weekend = CASE
+    WHEN day_of_the_week IN ('Saturday', 'Sunday') THEN 1 
+    ELSE 0 
+END;
+
+ALTER TABLE cyclistic_2024
+ADD ride_length float;
+
+UPDATE cyclistic_2024
+SET ride_length = DATEDIFF(SECOND, started_at, ended_at);
